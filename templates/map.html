@@ -45,7 +45,7 @@ fetch('gas.csv').then(response => response.ok ? response.text() : null).then(csv
 		return
 	}
 	document.getElementById("map").innerHTML=""
-	let map = L.map('map', {center: [38.25, -85.65], zoom: 11, layers: [L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')]});
+	let map = L.map('map', {center: [38.243, -85.647], zoom: 11, layers: [L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')]});
 	let storeLayers = {};
 	let store,url;
 	csv.split('\n').forEach(line => {
