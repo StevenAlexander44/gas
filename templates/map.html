@@ -3,62 +3,47 @@
 <head>
 	<title>Gas Prices</title>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta content="Gas Prices" property="og:title">
+	<meta content='https://gas.stevenalexander.org/gas.svg' property='og:image'>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<link rel="icon" type="image/x-icon" href="/gas.svg">
-	<base target="_blank">
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
-	<style>
-html, body {
-	height: 100%;
-	margin: 0;
+	<base target="_blank">
+	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
+.leaflet-container a{
+	color:black;
+	text-decoration:none;
 }
-#map {
-	height: 100vh;
+.Costco,.Sams{
+	display:flex;
+	border-radius:33%;
+	text-align:center;
+	align-items:center;
+	font-size:14px;
+	font-weight:bold;
 }
-.leaflet-container a {
-	color: black;
-	text-decoration: none;
-}
-.Costco, .Sams {
-	display: flex;
-	border-radius: 33%;
-	text-align: center;
-	align-items: center;
-	font-size: 14px;
-	font-weight: bold;
-}
-.Costco {
-	background-color: rgba(227, 42, 54, 0.5);
-}
-.Sams {
-	background-color: rgba(0, 103, 160, 0.5);
-}
+.Costco{background-color:rgba(227,42,54,0.5);}
+.Sams{background-color:rgba(0,103,160,0.5);}
 	</style>
 </head>
 <body>
-	<div id="map">Fetching the latest prices from Sam's and Costco's slow servers...</div>
+	<div id="map"></div>
 	<script>
-fetch('gas.csv').then(response => response.ok ? response.text() : null).then(csv => {
-	if (!csv) {
-		document.getElementById("map").innerHTML="Query failed. You can try to reload, but if that doesn't work, sam's or costco probably blocked me.<br>If issues persist, feel free to email me: steven@stevenalexander.org";
-		return
-	}
-	document.getElementById("map").innerHTML=""
-	let map = L.map('map', {center: [38.243, -85.647], zoom: 11, layers: [L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')]});
-	let storeLayers = {};
-	let store,url;
-	csv.split('\n').forEach(line => {
-		if (line.includes(',')) {
-			let [u, p, lat, lng, id] = line.split(',');
-			[u, p] = [u, p].map(cents => (cents/100).toFixed(2));
-			L.marker([lat,lng], {icon: L.divIcon({className: store, html: '<a href="'+url.replace("X",id)+'">$'+u+'\n$'+p+'</a>', iconSize: [44,44]})}).addTo(storeLayers[store])
-		} else {
-			[store,url] = line.split(" ");
-			storeLayers[store] = L.layerGroup().addTo(map)
+let map=L.map('map',{center:[38.243,-85.647],zoom:11,layers:[L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')]});
+fetch('gas.csv').then(response=>response.text()).then(csv=>{
+	let storeLayers={},store,url;
+	csv.split('\n').forEach(line=>{
+		if(line.includes(',')){
+			let [u,p,lat,lng,id]=line.split(',');
+			[u,p]=[u,p].map(cents=>(cents/100).toFixed(2));
+			L.marker([lat,lng],{icon:L.divIcon({className:store,html:`<a href="${url.replace("X",id)}">$${u}\n$${p}</a>`,iconSize:[44,44]})}).addTo(storeLayers[store])
+		}else{
+			[store,url]=line.split(" ");
+			storeLayers[store]=L.layerGroup().addTo(map)
 		}
 	})
-	let layerControl = L.control.layers(null, storeLayers, {collapsed: false}).addTo(map);
+	let layerControl=L.control.layers(null,storeLayers,{collapsed:false}).addTo(map);
 })
 	</script>
 </body>
