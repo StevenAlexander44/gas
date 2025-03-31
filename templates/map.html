@@ -7,8 +7,8 @@
 	<meta content='https://gas.stevenalexander.org/gas.svg' property='og:image'>
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<link rel="icon" type="image/x-icon" href="/gas.svg">
-	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+	<script src="https://stevenalexander.org/leaflet/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://stevenalexander.org/leaflet/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 	<base target="_blank">
 	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
 .leaflet-container a{
@@ -34,8 +34,8 @@ let osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
 let map=L.map('map',{center:[38.243,-85.647],zoom:11,layers:[osm]});
 let layerControl=L.control.layers({"fetching gas prices...":osm},null,{collapsed:false}).addTo(map);
 fetch('gas.csv').then(response=>{
+	layerControl.remove();
 	if(!response.ok){
-		layerControl.remove();
 		L.control.layers({'fetch failed. try reloading?':osm},null,{collapsed:false}).addTo(map);
 		return
 	}
@@ -45,15 +45,14 @@ fetch('gas.csv').then(response=>{
 	csv.split('\n').forEach(line=>{
 		if(line.includes(',')){
 			let [u,p,lat,lng,id]=line.split(',');
-			[u,p]=[u,p].map(cents=>(cents/100).toFixed(2));
-			L.marker([lat,lng],{icon:L.divIcon({className:store,html:`<a href="${url.replace("X",id)}">$${u}\n$${p}</a>`,iconSize:[44,44]})}).addTo(storeLayers[store])
+			[u,p]=[u,p].map(cents=>"$"+(cents/100).toFixed(2));
+			L.marker([lat,lng],{icon:L.divIcon({className:store,html:`<a href="${url.replace("X",id)}">${u}\n${p}</a>`,iconSize:[44,44]})}).addTo(storeLayers[store])
 		}else{
 			[store,url]=line.split(" ");
 			storeLayers[store]=L.layerGroup().addTo(map)
 		}
 	})
-	layerControl.remove();
-	layerControl=L.control.layers(null,storeLayers,{collapsed:false}).addTo(map)
+	L.control.layers(null,storeLayers,{collapsed:false}).addTo(map)
 })
 	</script>
 </body>
