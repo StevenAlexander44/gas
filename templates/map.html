@@ -30,8 +30,17 @@
 <body>
 	<div id="map"></div>
 	<script>
-let map=L.map('map',{center:[38.243,-85.647],zoom:11,layers:[L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')]});
-fetch('gas.csv').then(response=>response.text()).then(csv=>{
+let osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+let map=L.map('map',{center:[38.243,-85.647],zoom:11,layers:[osm]});
+let layerControl=L.control.layers({"fetching gas prices...":osm},null,{collapsed:false}).addTo(map);
+fetch('gas.csv').then(response=>{
+	if(!response.ok){
+		layerControl.remove();
+		L.control.layers({'fetch failed. try reloading?':osm},null,{collapsed:false}).addTo(map);
+		return
+	}
+	return response.text()
+}).then(csv=>{
 	let storeLayers={},store,url;
 	csv.split('\n').forEach(line=>{
 		if(line.includes(',')){
@@ -43,7 +52,8 @@ fetch('gas.csv').then(response=>response.text()).then(csv=>{
 			storeLayers[store]=L.layerGroup().addTo(map)
 		}
 	})
-	let layerControl=L.control.layers(null,storeLayers,{collapsed:false}).addTo(map);
+	layerControl.remove();
+	layerControl=L.control.layers(null,storeLayers,{collapsed:false}).addTo(map)
 })
 	</script>
 </body>
