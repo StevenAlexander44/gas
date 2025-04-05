@@ -24,11 +24,4 @@ def gas():
 		if 'gasPrices' in s:
 			p={g['gradeId']:int(g['price']*100) for g in s['gasPrices']}
 			result.append(f"{p[11]},{p[16]},{s['geoPoint']['latitude']},{s['geoPoint']['longitude']},{s['id']}")
-	result.append("Costco https://www.costco.com/warehouse-locations-X.html#:~:text=Gas%20Station")
-	url='https://www.costco.com/AjaxWarehouseBrowseLookupView?hasGas=true&populateWarehouseDetails=true'
-	costco=requests.get(url,headers={'User-Agent':'Mozilla/5.0','Accept-Encoding':'gzip'}).json()[1:]
-	for s in costco:
-		if 'regular' in s['gasPrices'] and s['country']=='US':
-			p={g:int(float(s['gasPrices'][g])*100) for g in ['regular','premium']}
-			result.append(f"{p['regular']},{p['premium']},{s['latitude']},{s['longitude']},{s['displayName']}")
 	return "\n".join(result)
