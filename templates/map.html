@@ -51,7 +51,7 @@ fetch("gas.csv").then(response=>{
 }).catch(error=>{
 	L.control.layers({"fetch failed. you could try reloading, otherwise email me.":osm},null,{collapsed:false}).addTo(map);
 	console.error(error)
-}
+})
 	</script>
 </body>
 </html>
