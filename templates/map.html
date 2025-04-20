@@ -53,6 +53,31 @@ for (const [chain,url] of Object.entries(chains)){
 		layerControl.addOverlay(L.layerGroup(),`${chain} request was blocked :(`)
 	})
 }
+const lastPosition=localStorage.getItem("lastPosition");
+if(lastPosition){
+	const pos=JSON.parse(lastPosition);
+	map.setView(pos.coords,pos.zoom);
+}
+map.on("moveend zoomend",function(){
+	const center=map.getCenter();
+	localStorage.setItem("lastPosition",JSON.stringify({coords:[center.lat,center.lng],zoom:map.getZoom()}));
+});
+const ResetViewControl=L.Control.extend({
+	onAdd:function(map){
+		const btn=L.DomUtil.create('button','leaflet-bar leaflet-control');
+		btn.innerHTML='⌂';
+		btn.title='Reset view';
+		btn.style.backgroundColor='white';
+		btn.style.font='22px bold';
+		btn.style.cursor='pointer';
+		L.DomEvent.on(btn,'click',function(e){
+			localStorage.removeItem("lastPosition");
+			location.reload();
+		});
+		return btn;
+	}
+});
+map.addControl(new ResetViewControl({position:'topleft'}));
 	</script>
 </body>
 </html>
