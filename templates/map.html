@@ -14,44 +14,45 @@
 	color:black;
 	text-decoration:none;
 }
-.Sams{
+.samsclub,.costco{
 	display:flex;
 	border-radius:33%;
 	text-align:center;
 	align-items:center;
 	font-size:14px;
 	font-weight:bold;
-	background-color:rgba(0,103,160,0.5);
 }
+.samsclub{background-color:rgba(0,103,160,0.5);}
+.costco{background-color:rgba(227,42,54,0.5);}
 	</style>
 </head>
 <body>
 	<div id="map"></div>
 	<script>
-let osm=L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
-let map=L.map("map",{center:[38.243,-85.647],zoom:11,layers:[osm]});
-let layerControl=L.control.layers({"fetching gas prices...":osm},null,{collapsed:false}).addTo(map);
-fetch("gas.csv").then(response=>{
-	layerControl.remove();
-	if(!response.ok){throw new Error(response.status)}
-	return response.text()
-}).then(csv=>{
-	let storeLayers={},store,url;
-	csv.split("\n").forEach(line=>{
-		if(line.includes(",")){
+let map=L.map("map",{center:[38.243,-85.647],zoom:11,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
+let layerControl=L.control.layers(null,null,{collapsed:false}).addTo(map);
+let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Costco":"https://www.costco.com/warehouse-locations-X.html#:~:text=Gas%20Station"};
+for (const [chain,url] of Object.entries(chains)){
+	const chainId=chain.toLowerCase().replace(/[^a-z]/g,'');
+	chains[chain]=L.layerGroup().addTo(map);
+	layerControl.addOverlay(chains[chain],`${chain} loading...`)
+	fetch(chainId+".csv").then(response=>{
+		if(!response.ok){throw new Error(response.status)}
+		return response.text()
+	}).then(csv=>{
+		csv.split("\n").forEach(line=>{
 			let [u,p,lat,lng,id]=line.split(",");
 			[u,p]=[u,p].map(cents=>"$"+(cents/100).toFixed(2));
-			L.marker([lat,lng],{icon:L.divIcon({className:store,html:`<a href="${url.replace("X",id)}">${u}\n${p}</a>`,iconSize:[44,44]})}).addTo(storeLayers[store])
-		}else{
-			[store,url]=line.split(" ");
-			storeLayers[store]=L.layerGroup().addTo(map)
-		}
+			L.marker([lat,lng],{icon:L.divIcon({className:chainId,html:`<a href="${url.replace("X",id)}">${u}\n${p}</a>`,iconSize:[44,44]})}).addTo(chains[chain])
+		})
+		layerControl.removeLayer(chains[chain]);
+		layerControl.addOverlay(chains[chain],`${chain} (${chains[chain].getLayers().length} locations)`)
+	}).catch(error=>{
+		console.error(error);
+		layerControl.removeLayer(chains[chain]);
+		layerControl.addOverlay(L.layerGroup(),`${chain} request was blocked :(`)
 	})
-	L.control.layers(null,storeLayers,{collapsed:false}).addTo(map)
-}).catch(error=>{
-	L.control.layers({"fetch failed. you could try reloading, otherwise email me.":osm},null,{collapsed:false}).addTo(map);
-	console.error(error)
-})
+}
 	</script>
 </body>
 </html>
