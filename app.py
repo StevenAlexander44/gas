@@ -17,8 +17,8 @@ def favicon():
 @app.route("/samsclub.csv")
 @cache.cached(timeout=1800)
 def sams():
-    url='https://www.samsclub.com/api/node/vivaldi/browse/v2/clubfinder/list?distance=10000&nbrOfStores=1000&singleLineAddr=10001'
-    headers={'User-Agent':'Mozilla/5.0','Accept-Encoding':'ztsd'}
+    url='https://www.samsclub.com/api/node/vivaldi/browse/v2/clubfinder/list?distance=9999&nbrOfStores=999&singleLineAddr=1'
+    headers={'User-Agent':'Mozilla/5.0'}
     sams=httpx.get(url,headers=headers,timeout=10).json()
     result=[]
     for s in sams:
@@ -31,11 +31,25 @@ def sams():
 @cache.cached(timeout=1800)
 def costco():
     url='https://www.costco.com/AjaxWarehouseBrowseLookupView?hasGas=true&populateWarehouseDetails=true'
-    headers={'Accept':'*/*','Accept-Encoding':'gzip,deflate,br,zstd','Accept-Language':'en','Referer':'costco.com','Sec-Fetch-Mode':'cors','User-Agent':'Mozilla/5.0 Firefox/140.0'}
+    headers={'Accept-Language':'en','Referer':'costco.com','Sec-Fetch-Mode':'cors','User-Agent':'Mozilla/5.0 Firefox/140.0'}
     costco=httpx.Client(http2=True).get(url,headers=headers,timeout=60).json()[1:]
     result=[]
     for s in costco:
         if 'regular' in s['gasPrices'] and s['country']=='US':
             p={g:int(float(s['gasPrices'][g])*100) for g in ['regular','premium']}
             result.append(f"{p['regular']},{p['premium']},{s['latitude']},{s['longitude']},{s['displayName']}")
+    return "\n".join(result)
+
+@app.route("/meijer.csv")
+@cache.cached(timeout=1800)
+def meijer():
+    url='https://www.meijer.com/bin/meijer/store/search/proximity?latitude=38.3&longitude=-85.7&miles=20&numToReturn=10'
+    headers={'User-Agent':'Firefox/140'}
+    meijer=httpx.get(url,headers=headers).json()['store']
+    result=[]
+    for s in meijer:
+        p=httpx.get(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}",headers=headers).json()
+        if 'fuelPrices' in p:
+            p={g['FuelType'].split('-')[0]:int(g['FuelPrice']*100) for g in p['fuelPrices']}
+            result.append(f"{p['UNL']},{p['PREM']},{s['latitude']},{s['longitude']},{s['UnitId']}")
     return "\n".join(result)
