@@ -10,9 +10,9 @@ cache=Cache(app)
 def index():
     return render_template("map.html")
 
-@app.route("/gas.svg")
+@app.route("/gas.ico")
 def favicon():
-    return send_from_directory(app.static_folder,"gas.svg")
+    return send_from_directory(app.static_folder,"gas.ico")
 
 @app.route("/samsclub.csv")
 @cache.cached(timeout=1800)
