@@ -14,16 +14,14 @@
 	color:black;
 	text-decoration:none;
 }
-.samsclub,.costco,.meijer{
+.samsclub,.meijer{
 	display:flex;
 	text-align:center;
 	align-items:center;
 	font-size:14px;
 	font-weight:bold;
 }
-.samsclub,.costco{border-radius:33%;}
 .samsclub{background-color:rgba(0,103,160,0.5);}
-.costco{background-color:rgba(227,42,54,0.5);}
 .meijer{background-color:rgba(221,19,33,0.5);}
 	</style>
 </head>
@@ -32,7 +30,7 @@
 	<script>
 let map=L.map("map",{center:[38.243,-85.647],zoom:11,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
 let layerControl=L.control.layers(null,null,{collapsed:false}).addTo(map);
-let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Costco":"https://www.costco.com/warehouse-locations-X.html#:~:text=Gas%20Station","Meijer":"https://www.meijer.com/shopping/store-locator/X.html"};
+let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html"};
 for (const [chain,url] of Object.entries(chains)){
 	const chainId=chain.toLowerCase().replace(/[^a-z]/g,'');
 	chains[chain]=L.layerGroup().addTo(map);

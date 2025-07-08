@@ -1,4 +1,4 @@
-from flask import Flask,render_template,send_from_directory
+from flask import Flask,render_template
 from flask_caching import Cache
 import httpx
 
@@ -21,19 +21,6 @@ def sams():
         if 'gasPrices' in s:
             p={g['gradeId']:int(g['price']*100) for g in s['gasPrices']}
             result.append(f"{p[11]},{p[16]},{s['geoPoint']['latitude']},{s['geoPoint']['longitude']},{s['id']}")
-    return "\n".join(result)
-
-@app.route("/costco.csv")
-@cache.cached(timeout=1800)
-def costco():
-    url='https://www.costco.com/AjaxWarehouseBrowseLookupView?hasGas=true&populateWarehouseDetails=true'
-    headers={'Accept-Language':'en','Referer':'costco.com','Sec-Fetch-Mode':'cors','User-Agent':'Mozilla/5.0 Firefox/140.0'}
-    costco=httpx.Client(http2=True).get(url,headers=headers,timeout=60).json()[1:]
-    result=[]
-    for s in costco:
-        if 'regular' in s['gasPrices'] and s['country']=='US':
-            p={g:int(float(s['gasPrices'][g])*100) for g in ['regular','premium']}
-            result.append(f"{p['regular']},{p['premium']},{s['latitude']},{s['longitude']},{s['displayName']}")
     return "\n".join(result)
 
 @app.route("/meijer.csv")
