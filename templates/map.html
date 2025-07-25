@@ -14,17 +14,17 @@
 	color:black;
 	text-decoration:none;
 }
-.samsclub,.marathon,.murphyusa,.meijer{
+.samsclub,.murphyusa,.meijer,.marathon{
 	display:flex;
 	text-align:center;
 	align-items:center;
 	font-size:14px;
 	font-weight:bold;
 }
-.samsclub{background-color:rgba(0,103,160,0.5);border-radius:44%;}
-.marathon{background-color:rgba(237,23,79,0.5);border-radius:44%;}
-.murphyusa{background-color:rgba(35,91,168,0.5);}
+.samsclub{background-color:rgba(0,103,160,0.5);}
+.murphyusa{background-color:rgba(35,91,168,0.5);border-radius:37%;}
 .meijer{background-color:rgba(221,19,33,0.5);}
+.marathon{background-color:rgba(237,23,79,0.5);border-radius:37%;}
 	</style>
 </head>
 <body>
@@ -32,7 +32,7 @@
 	<script>
 let map=L.map("map",{center:[38.243,-85.647],zoom:11,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
 let layerControl=L.control.layers(null,null,{collapsed:false}).addTo(map);
-let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Murphy USA":"tel:+1X","Marathon":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html"};
+let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X"};
 for (const [chain,url] of Object.entries(chains)){
 	const chainId=chain.toLowerCase().replace(/[^a-z]/g,'');
 	chains[chain]=L.layerGroup().addTo(map);
