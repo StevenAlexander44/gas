@@ -23,6 +23,32 @@ def sams():
             result.append(f"{p[11]},{p[16]},{s['geoPoint']['latitude']},{s['geoPoint']['longitude']},{s['id']}")
     return "\n".join(result)
 
+@app.route("/murphyusa.csv")
+@cache.cached(timeout=1800)
+def murphy():
+    url='https://service.murphydriverewards.com/api/store'
+    headers={'User-Agent':'Mozilla/5.0'}
+    murphy=httpx.post(url,headers=headers,json={"pageSize":9999,"range":9999}).json()['data']['stores']
+    result=[]
+    for s in murphy:
+        p={g['fuelTypeId']:int(g['price']*100) for g in s['gasPrices']}
+        if 12 in p or 14 in p:
+            result.append(f"{p.get(12,'0')},{p.get(14,'0')},{s['latitude']},{s['longitude']},{''.join(c for c in s['phone'] if c.isdigit())}")
+    return "\n".join(result)
+
+@app.route("/marathon.csv")
+@cache.cached(timeout=1800)
+def marathon():
+    url='https://www.marathonarcorewards.com/ajax_stations_search.html?reason=get-station-info'
+    headers={'User-Agent':'Mozilla/5.0'}
+    marathon=httpx.get(url,headers=headers).json()
+    result=[]
+    for s in marathon:
+        p={g['description']:int(float(g['unitPrice'])*100) for g in s['price_data']}
+        if 'UNLEADED' in p or 'PREMIUM' in p:
+            result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
+    return "\n".join(result)
+
 @app.route("/meijer.csv")
 @cache.cached(timeout=1800)
 def meijer():
