@@ -8,6 +8,9 @@
 	<link rel="shortcut icon" href="static/gas.ico">
 	<script src="/static/leaflet/leaflet.js"></script>
 	<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+	<script src="/static/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+	<link rel="stylesheet" href="/static/leaflet.markercluster/dist/MarkerCluster.css">
+	<link rel="stylesheet" href="/static/leaflet.markercluster/dist/MarkerCluster.Default.css">
 	<base target="_blank">
 	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
 .leaflet-container a{
@@ -35,7 +38,17 @@ let layerControl=L.control.layers(null,null,{collapsed:false}).addTo(map);
 let chains={"Sam's Club":"https://www.samsclub.com/local/fuel-center/-/X","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X"};
 for (const [chain,url] of Object.entries(chains)){
 	const chainId=chain.toLowerCase().replace(/[^a-z]/g,'');
-	chains[chain]=L.layerGroup().addTo(map);
+	chains[chain]=L.markerClusterGroup({maxClusterRadius:120,iconCreateFunction:function(cluster){
+		var markers=cluster.getAllChildMarkers();
+		var u=[],p=[];
+		for(var i=0;i<markers.length;i++){
+			if(markers[i].u>199){u.push(markers[i].u)}
+			if(markers[i].p>299){p.push(markers[i].p)}
+		}
+		u=(u.reduce((t,a)=>t+a,0)/u.length);
+		p=(p.reduce((t,a)=>t+a,0)/p.length);
+		return createIcon(chainId,u,p,64)
+	}}).addTo(map);
 	layerControl.addOverlay(chains[chain],`${chain} loading...`)
 	fetch(chainId+".csv").then(response=>{
 		if(!response.ok){throw new Error(response.status)}
@@ -43,8 +56,9 @@ for (const [chain,url] of Object.entries(chains)){
 	}).then(csv=>{
 		csv.split("\n").forEach(line=>{
 			let [u,p,lat,lng,id]=line.split(",");
-			[u,p]=[u,p].map(cents=>"$"+(cents/100).toFixed(2));
-			L.marker([lat,lng],{icon:L.divIcon({className:chainId,html:`<a href="${url.replace("X",id)}">${u}\n${p}</a>`,iconSize:[44,44]})}).addTo(chains[chain])
+			m=L.marker([lat,lng],{icon:createIcon(chainId,u,p,44)}).addTo(chains[chain]);
+			m.u=Number(u);
+			m.p=Number(p)
 		})
 		layerControl.removeLayer(chains[chain]);
 		layerControl.addOverlay(chains[chain],`${chain} (${chains[chain].getLayers().length} locations)`)
@@ -53,6 +67,11 @@ for (const [chain,url] of Object.entries(chains)){
 		layerControl.removeLayer(chains[chain]);
 		layerControl.addOverlay(L.layerGroup(),`${chain} request was blocked :(`)
 	})
+}
+function createIcon(chainId,u,p,s){
+	u=(u/100).toLocaleString("en-US",{style:"currency",currency:"USD"});
+	p=(p/100).toLocaleString("en-US",{style:"currency",currency:"USD"});
+	return L.divIcon({className:chainId,html:`${u}\n${p}`,iconSize:[s,s]})
 }
 const lastPosition=localStorage.getItem("lastPosition");
 if(lastPosition){
