@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Gas Prices</title>
+	<meta name="description" content="Track the gas prices of thousands of locations across the United States">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<link rel="shortcut icon" href="static/gas.ico">
+	<script src="/static/leaflet/leaflet.js"></script>
+	<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+	<script src="/static/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+	<link rel="stylesheet" href="/static/leaflet.markercluster/dist/MarkerCluster.css">
+	<base target="_blank">
+	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
+.cluster,.samsclub,.murphyusa,.meijer,.marathon{
+	text-align:center;
+	align-items:center;
+	font-size:14px;
+	font-weight:bold;
+	border-radius:6px;
+	border:1px solid black;
+	width:auto !important;
+	height:auto !important;
+}
+.cluster{background-color:rgb(147,112,219,0.7);}
+.samsclub{background-color:rgba(0,103,160,0.5);}
+.murphyusa{background-color:rgba(35,91,168,0.5);}
+.meijer{background-color:rgba(221,19,33,0.5);}
+.marathon{background-color:rgba(237,23,79,0.5);}
+.preferences-control{
+	background-color:white;
+	cursor:pointer;
+	font-size:22px;
+	padding:2px 4px;
+}
+.preferences-menu{
+	font-size:14px;
+}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+	<script>
+let pos=JSON.parse(localStorage.getItem("lastPosition"))||{coords:[38.243,-85.647],zoom:11};
+let map=L.map("map",{center:pos.coords,zoom:pos.zoom,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
+let chains={"Sam's Club":"https://www.samsclub.com/local/X/fuel-center","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X"};
+function loadMarkers(){
+	markers=L.markerClusterGroup({maxClusterRadius:64,iconCreateFunction:(cluster)=>{
+		prices=cluster.getAllChildMarkers().map(marker=>{return marker.price});
+		return L.divIcon({className:"cluster",html:`${formatPrice(Math.min(...prices))} ${formatPrice(Math.max(...prices))}`,iconSize:[44,44]})
+	}});
+	for (const [chain,url] of Object.entries(chains)){
+		const chainId=chain.toLowerCase().replace(/[^a-z]/g,'');
+		fetch(chainId+".csv").then(response=>{
+			if(!response.ok){throw new Error(response.status)}
+			return response.text()
+		}).then(csv=>{
+			csv.split("\n").forEach(line=>{
+				let [u,p,lat,lng,id]=line.split(",");
+				if(preferences.grade=="unleaded"){
+					price=Number(u);
+					if(price<199||price>599)return
+				}else{
+					price=Number(p);
+					if(price<299||price>699)return
+				}
+				m=L.marker([lat,lng],{
+					icon:L.divIcon({className:chainId,html:`${formatPrice(price)}`,iconSize:[44,22]})
+				}).bindPopup(`<a href="${url.replace("X",id)}">${chain} ${id}</a><br>Unleaded: $${u/100}<br>Premium: $${p/100}`);
+				m.price=price;
+				markers.addLayer(m);
+			})
+		}).catch(error=>{
+			console.error(error);
+		})
+	}
+	markers.addTo(map);
+}
+function formatPrice(price){
+	if(preferences.gallons!=1)price+=0.9;
+	return (price*Number(preferences.gallons)/100).toLocaleString("en-US",{style:"currency",currency:"USD"})
+}
+map.on("moveend zoomend",()=>{
+	const c=map.getCenter();
+	localStorage.setItem("lastPosition",JSON.stringify({coords:[c.lat,c.lng],zoom:map.getZoom()}))
+});
+let preferences=JSON.parse(localStorage.getItem("preferences"))||{grade:"unleaded",gallons:1};
+const PreferencesControl=L.Control.extend({
+	onAdd:(map)=>{
+		const container=L.DomUtil.create('div','preferences-control leaflet-bar leaflet-control');
+		const cog=L.DomUtil.create('div');
+		cog.innerHTML='⚙';
+		const menu=L.DomUtil.create('div','preferences-menu');
+		menu.style.display="none";
+		menu.innerHTML=`<label><input type="radio" name="grade" value="unleaded"${preferences.grade=="unleaded"?" checked":""}>Unleaded</label><label><input type="radio" name="grade" value="premium"${preferences.grade=="premium"?" checked":""}>Premium</label>`
+		menu.innerHTML+=`<br><label for="gallons"># of gallons: </label><input type="number" id="gallons" min="0" max="100" value="${preferences.gallons}">`
+		menu.innerHTML+=`<br><button onclick='localStorage.removeItem("lastPosition");location.reload()'>Reset location</button>`
+		L.DomEvent.on(menu,'change',(e)=>{
+			if(e.target.id=="gallons"){
+				preferences.gallons=e.target.value
+			}else{
+				preferences.grade=e.target.value
+			}
+			markers.clearLayers();loadMarkers();
+			localStorage.setItem("preferences",JSON.stringify(preferences))
+		});
+		container.appendChild(cog);
+		container.appendChild(menu);
+		L.DomEvent.on(container,'mouseover',(e)=>{
+			cog.style.display="none";
+			menu.style.display="block";
+		});
+		L.DomEvent.on(container,'mouseout',(e)=>{
+			menu.style.display="none";
+			cog.style.display="block";
+		});
+		return container;
+	}
+});
+map.addControl(new PreferencesControl({position:'topleft'}));
+loadMarkers();
+	</script>
+</body>
+</html>
