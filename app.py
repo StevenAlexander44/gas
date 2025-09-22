@@ -44,7 +44,7 @@ def marathon():
     marathon=httpx.get(url,headers=headers).json()
     result=[]
     for s in marathon:
-        p={g['description']:int(float(g['unitPrice'])*100) for g in s['price_data']}
+        p={g['description']:int(float(g['unitPrice'])*100) for g in s['price_data'] if str(g['unitPrice'])[-1]=='9'}
         if 'UNLEADED' in p or 'PREMIUM' in p:
             result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
     return "\n".join(result)
