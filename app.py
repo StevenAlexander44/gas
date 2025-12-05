@@ -1,6 +1,7 @@
 from flask import Flask,render_template
 from flask_caching import Cache
 import httpx
+import re
 
 app=Flask(__name__)
 app.config['CACHE_TYPE']='SimpleCache'
@@ -49,15 +50,17 @@ def marathon():
             result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
     return "\n".join(result)
 
+def fetch_meijer(url):
+    r=httpx.post('http://localhost:8191/v1',json={'cmd':'request.get','url':url,'session':'meijer'})
+    return json.loads(re.search(r'<pre>(.*?)<\/pre>',r.json()['solution']['response']).group(1))
+
 @app.route("/meijer.csv")
 @cache.cached(timeout=1800)
 def meijer():
-    url='https://www.meijer.com/bin/meijer/store/search/proximity?latitude=38.3&longitude=-85.7&miles=20&numToReturn=10'
-    headers={'User-Agent':'Firefox/140'}
-    meijer=httpx.get(url,headers=headers).json()['store']
+    meijer=fetch_meijer('https://www.meijer.com/bin/meijer/store/search/proximity?latitude=38.2&longitude=-85.7&miles=20&numToReturn=10')
     result=[]
-    for s in meijer:
-        p=httpx.get(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}",headers=headers).json()
+    for s in meijer['store']:
+        p=fetch_meijer(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}")
         if 'fuelPrices' in p:
             p={g['FuelType'].split('-')[0]:int(g['FuelPrice']*100) for g in p['fuelPrices']}
             result.append(f"{p['UNL']},{p['PREM']},{s['latitude']},{s['longitude']},{s['UnitId']}")
