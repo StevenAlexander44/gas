@@ -51,17 +51,18 @@ def marathon():
             result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
     return "\n".join(result)
 
-def fetch_meijer(url):
-    r=httpx.post('http://localhost:8191/v1',json={'cmd':'request.get','url':url,'session':'meijer'})
-    return json.loads(re.search(r'<pre>(.*?)<\/pre>',r.json()['solution']['response']).group(1))
+def prowl(url,brand):
+    tag={'meijer':'pre','costco':'body'}.get(brand)
+    r=httpx.post('http://localhost:8191/v1',json={'cmd':'request.get','url':url,'session':brand})
+    return json.loads(re.search(rf'<{tag}>(.*?)<\/{tag}>',r.json()['solution']['response']).group(1))
 
 @app.route("/meijer.csv")
 @cache.cached(timeout=1800)
 def meijer():
-    meijer=fetch_meijer('https://www.meijer.com/bin/meijer/store/search/proximity?latitude=38.2&longitude=-85.7&miles=20&numToReturn=10')
+    meijer=prowl('https://www.meijer.com/bin/meijer/store/search/proximity?latitude=38.2&longitude=-85.7&miles=20&numToReturn=10','meijer')
     result=[]
     for s in meijer['store']:
-        p=fetch_meijer(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}")
+        p=prowl(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}",'meijer')
         if 'fuelPrices' in p:
             p={g['FuelType'].split('-')[0]:int(g['FuelPrice']*100) for g in p['fuelPrices']}
             result.append(f"{p['UNL']},{p['PREM']},{s['latitude']},{s['longitude']},{s['UnitId']}")
