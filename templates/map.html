@@ -12,7 +12,7 @@
 	<link rel="stylesheet" href="/static/leaflet.markercluster/dist/MarkerCluster.css">
 	<base target="_blank">
 	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
-.cluster,.samsclub,.murphyusa,.meijer,.marathon{
+.cluster,.wawa,.samsclub,.murphyusa,.meijer,.marathon{
 	text-align:center;
 	align-items:center;
 	font-size:14px;
@@ -23,6 +23,7 @@
 	height:auto !important;
 }
 .cluster{background-color:rgb(147,112,219,0.7);}
+.wawa{background-color:rgba(171,27,44,0.5);}
 .samsclub{background-color:rgba(0,103,160,0.5);}
 .murphyusa{background-color:rgba(35,91,168,0.5);}
 .meijer{background-color:rgba(221,19,33,0.5);}
@@ -43,7 +44,7 @@
 	<script>
 let pos=JSON.parse(localStorage.getItem("lastPosition"))||{coords:[38.243,-85.647],zoom:11};
 let map=L.map("map",{center:pos.coords,zoom:pos.zoom,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
-let chains={"Sam's Club":"https://www.samsclub.com/local/X/fuel-center","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X"};
+let chains={"Wawa":"https://www.wawa.com/locations/X","Sam's Club":"https://www.samsclub.com/local/X/fuel-center","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X"};
 function loadMarkers(){
 	markers=L.markerClusterGroup({maxClusterRadius:64,iconCreateFunction:(cluster)=>{
 		prices=cluster.getAllChildMarkers().map(marker=>{return marker.price});

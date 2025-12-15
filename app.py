@@ -51,6 +51,19 @@ def marathon():
             result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
     return "\n".join(result)
 
+@app.route("/wawa.csv")
+@cache.cached(timeout=1800)
+def wawa():
+    url='https://www2.wawa.com/handlers/locationbylatlong.ashx?limit=9999&lat=38.2&long=-85.7'
+    headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64; rv:146.0) Gecko/20100101 Firefox/146.0','Referer':'https://www2.wawa.com'}
+    wawa=httpx.get(url,headers=headers).json()['locations']
+    result=[]
+    for s in wawa:
+        p={g['description']:int(float(g['price'])*100) for g in s['fuelTypes']}
+        if 'Unleaded' in p or 'Premium' in p:
+            result.append(f"{p.get('Unleaded','0')},{p.get('Premium','0')},{s['addresses'][1]['loc'][0]},{s['addresses'][1]['loc'][1]},{int(s['locationID'])}")
+    return "\n".join(result)
+
 def prowl(url,brand):
     tag={'meijer':'pre','costco':'body'}.get(brand)
     r=httpx.post('http://localhost:8191/v1',json={'cmd':'request.get','url':url,'session':brand})
