@@ -12,6 +12,9 @@ cache=Cache(app)
 def index():
     return render_template("map.html")
 
+def penny(dollar):
+    return int(float(dollar)*100)
+
 @app.route("/samsclub.csv")
 @cache.cached(timeout=1800)
 def sams():
@@ -21,7 +24,7 @@ def sams():
     result=[]
     for s in sams:
         if 'gasPrices' in s:
-            p={g['gradeId']:int(g['price']*100) for g in s['gasPrices']}
+            p={g['gradeId']:penny(g['price']) for g in s['gasPrices']}
             result.append(f"{p[11]},{p[16]},{s['geoPoint']['latitude']},{s['geoPoint']['longitude']},{s['id']}")
     return "\n".join(result)
 
@@ -33,7 +36,7 @@ def murphy():
     murphy=httpx.post(url,headers=headers,json={"pageSize":9999,"range":9999}).json()['data']['stores']
     result=[]
     for s in murphy:
-        p={g['fuelTypeId']:int(g['price']*100) for g in s['gasPrices']}
+        p={g['fuelTypeId']:penny(g['price']) for g in s['gasPrices']}
         if 12 in p or 14 in p:
             result.append(f"{p.get(12,'0')},{p.get(14,'0')},{s['latitude']},{s['longitude']},{''.join(c for c in s['phone'] if c.isdigit())}")
     return "\n".join(result)
@@ -46,7 +49,7 @@ def marathon():
     marathon=httpx.get(url,headers=headers).json()
     result=[]
     for s in marathon:
-        p={g['description']:int(float(g['unitPrice'])*100) for g in s['price_data'] if str(g['unitPrice'])[-1]=='9'}
+        p={g['description']:penny(g['unitPrice']) for g in s['price_data'] if str(g['unitPrice'])[-1]=='9'}
         if 'UNLEADED' in p or 'PREMIUM' in p:
             result.append(f"{p.get('UNLEADED','0')},{p.get('PREMIUM','0')},{s['lat']},{s['lng']},{s['phone']}")
     return "\n".join(result)
@@ -59,7 +62,7 @@ def wawa():
     wawa=httpx.get(url,headers=headers).json()['locations']
     result=[]
     for s in wawa:
-        p={g['description']:int(float(g['price'])*100) for g in s['fuelTypes']}
+        p={g['description']:penny(g['price']) for g in s['fuelTypes']}
         if 'Unleaded' in p or 'Premium' in p:
             result.append(f"{p.get('Unleaded','0')},{p.get('Premium','0')},{s['addresses'][1]['loc'][0]},{s['addresses'][1]['loc'][1]},{int(s['locationID'])}")
     return "\n".join(result)
@@ -77,7 +80,21 @@ def meijer():
     for s in meijer:
         p=prowl(f"https://www.meijer.com/bin/meijer/store/hours?store-id={s['UnitId']}",'meijer')
         if 'fuelPrices' in p:
-            p={g['FuelType'].split('-')[0]:int(g['FuelPrice']*100) for g in p['fuelPrices']}
+            p={g['FuelType'].split('-')[0]:penny(g['FuelPrice']) for g in p['fuelPrices']}
             result.append(f"{p['UNL']},{p['PREM']},{s['latitude']},{s['longitude']},{s['UnitId']}")
     httpx.post('http://localhost:8191/v1',json={'cmd':'sessions.destroy','session':'meijer'})
+    return "\n".join(result)
+
+@app.route("/costco.csv")
+@cache.cached(timeout=1800)
+def costco():
+    url='https://ecom-api.costco.com/core/warehouse-locator/v1/warehouses.json?latitude=38.2&longitude=-85.7&limit=10'
+    headers={'User-Agent':'Mozilla/5.0','client-identifier':'7c71124c-7bf1-44db-bc9d-498584cd66e5'}
+    costco=httpx.get(url,headers=headers).json()['warehouses']
+    warehouses={w['warehouseId'] for w in costco}
+    p=prowl(f"https://www.costco.com/AjaxGetGasPricesService?warehouseid={'_'.join(warehouses)}",'costco')
+    result=[]
+    for s in costco:
+        w=s['warehouseId']
+        result.append(f"{penny(p[w].get('regular','0'))},{penny(p[w].get('premium','0'))},{s['address']['latitude']},{s['address']['longitude']},{w}")
     return "\n".join(result)
