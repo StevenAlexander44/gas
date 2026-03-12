@@ -9,7 +9,7 @@ app.config['CACHE_TYPE']='SimpleCache'
 cache=Cache(app)
 
 def prowl(url):
-    brands={'samsclub':'pre','meijer':'pre','costco':'body'}
+    brands={'meijer':'pre','costco':'body'}
     brand=next(b for b in brands if b in url)
     tag=brands[brand]
     r=httpx.post('http://localhost:8191/v1',json={'cmd':'request.get','url':url,'session':brand})
@@ -33,17 +33,6 @@ def wawa():
         p={g['description']:penny(g['price']) for g in s['fuelTypes']}
         if 'Unleaded' in p or 'Premium' in p:
             result.append(f"{p['Unleaded']},{p['Premium']},{s['addresses'][1]['loc'][0]},{s['addresses'][1]['loc'][1]},{int(s['locationID'])}")
-    return "\n".join(result)
-
-@app.route("/samsclub.csv")
-@cache.cached(timeout=1800)
-def sams():
-    sams=prowl('https://www.samsclub.com/api/node/vivaldi/browse/v2/clubfinder/list?distance=9999&nbrOfStores=999&singleLineAddr=1')
-    result=[]
-    for s in sams:
-        if 'gasPrices' in s:
-            p={g['gradeId']:penny(g['price']) for g in s['gasPrices']}
-            result.append(f"{p[11]},{p[16]},{s['geoPoint']['latitude']},{s['geoPoint']['longitude']},{s['id']}")
     return "\n".join(result)
 
 @app.route("/murphyusa.csv")
