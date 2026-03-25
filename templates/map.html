@@ -12,7 +12,7 @@
 	<link rel="stylesheet" href="/static/leaflet.markercluster/dist/MarkerCluster.css">
 	<base target="_blank">
 	<style>html,body{height:100%;margin:0;}#map{height:100vh;}
-.cluster,.wawa,.samsclub,.murphyusa,.meijer,.marathon,.costco{
+.cluster,.wawa,.samsclub,.murphyusa,.meijer,.marathon,.costco,.seveneleven{
 	text-align:center;
 	align-items:center;
 	font-size:14px;
@@ -29,6 +29,7 @@
 .meijer{background-color:rgba(221,19,33,0.5);}
 .marathon{background-color:rgba(237,23,79,0.5);}
 .costco{background-color:rgba(227,24,55,0.5);}
+.seveneleven{background-color:rgba(244,129,31,0.5);}
 .preferences-control{
 	background-color:white;
 	cursor:pointer;
@@ -45,7 +46,7 @@
 	<script>
 let pos=JSON.parse(localStorage.getItem("lastPosition"))||{coords:[38.243,-85.647],zoom:11};
 let map=L.map("map",{center:pos.coords,zoom:pos.zoom,layers:[L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")]});
-let chains={"Wawa":"https://www.wawa.com/locations/X","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X","Costco":"https://www.costco.com/w/X"};
+let chains={"Wawa":"https://www.wawa.com/locations/X","Murphy USA":"tel:+1X","Meijer":"https://www.meijer.com/shopping/store-locator/X.html","Marathon":"tel:+1X","Costco":"https://www.costco.com/w/X","Seven Eleven":"https://www.7-eleven.com/locations/-/-/X"};
 function loadMarkers(){
 	markers=L.markerClusterGroup({maxClusterRadius:64,iconCreateFunction:(cluster)=>{
 		prices=cluster.getAllChildMarkers().map(marker=>{return marker.price});

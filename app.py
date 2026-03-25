@@ -87,3 +87,19 @@ def costco():
         w=s['warehouseId']
         result.append(f"{penny(p[w].get('regular','0'))},{penny(p[w].get('premium','0'))},{s['address']['latitude']},{s['address']['longitude']},{w}")
     return "\n".join(result)
+
+@app.route("/seveneleven.csv")
+@cache.cached(timeout=1800)
+def seven():
+    url='https://apis.7-eleven.com/auth/jwt/token'
+    headers={'User-Agent':'Web-Server-User-Agent-Prod','content-type':'application/json'}
+    bear=httpx.post(url,headers=headers,json={"client_id":"sl3rgdU5c5ZvsYj95FGIuexau5Nt7J5OTf7VRPfV","client_secret":"11BBlWqIeLenwAmPOKqz8WN5NIZRCCSBSEcBtp9DikLh90WL217OlaCvghuDJucGP5wG12VW2vQ7FRAzUMcYtOOrLtcd4eMqShsOJJKZnJOL5snAnih0uyUN8ZEURXPh","grant_type":"client_credential"})
+    url='https://apis.7-eleven.com/v5/stores/graphql'
+    headers['authorization']=f"Bearer {bear.json()['access_token']}"
+    seven=httpx.post(url,headers=headers,json={"query":"query stores{stores(lat:\"38\"\nlon:\"-86\"\nradius:999\nlimit:99){lat\nlon\nid\nfuel_data}}"}).json()['data']['stores']
+    result=[]
+    for s in seven:
+        p={g['product_id']:penny(g['price']/1000) for g in s['fuel_data']['grades']}
+        if 1 in p or 2 in p:
+            result.append(f"{p.get(1,'0')},{p.get(2,'0')},{s['lat']},{s['lon']},{s['id']}")
+    return "\n".join(result)
