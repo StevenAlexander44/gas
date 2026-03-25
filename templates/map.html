@@ -62,10 +62,10 @@ function loadMarkers(){
 				let [u,p,lat,lng,id]=line.split(",");
 				if(preferences.grade=="unleaded"){
 					price=Number(u);
-					if(price<199||price>599)return
+					if(price<199)return
 				}else{
 					price=Number(p);
-					if(price<299||price>699)return
+					if(price<299)return
 				}
 				m=L.marker([lat,lng],{
 					icon:L.divIcon({className:chainId,html:`${formatPrice(price)}`,iconSize:[44,22]})
