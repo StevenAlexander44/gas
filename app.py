@@ -100,16 +100,10 @@ def seven():
     seven=httpx.post(url,headers=headers,json={"query":"query stores{stores(lat:\"38\"\nlon:\"-86\"\nradius:4999\nlimit:19999){lat\nlon\nid\nfuel_data}}"},timeout=44).json()['data']['stores']
     result=[]
     for s in seven:
-        if 'fuel_data' not in s:continue
-        try:
-            last_updated=dt.datetime.fromisoformat(s['fuel_data']['last_updated'])
-        except:
-            print(s['fuel_data'])
+        if s['fuel_data'] is None:continue
+        last_updated=dt.datetime.fromisoformat(s['fuel_data']['last_updated'])
         if dt.datetime.now(dt.timezone.utc)-last_updated>dt.timedelta(14):continue
-        try:
-            p={g['product_id']:penny(g['price']/1000) for g in s['fuel_data']['grades']}
-        except:
-            print(s['fuel_data'])
+        p={g['product_id']:penny(g['price']/1000) for g in s['fuel_data']['grades']}
         if 1 in p or 2 in p:
             result.append(f"{p.get(1,'0')},{p.get(2,'0')},{s['lat']},{s['lon']},{s['id']}")
     return "\n".join(result)
